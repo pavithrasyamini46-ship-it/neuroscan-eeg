@@ -197,7 +197,9 @@ def predict_from_csv(csv_path: str, model_name: str = None):
         df = df.drop(columns=['y'])
 
     # Use first row for single-sample prediction
+    df = df.select_dtypes(include=[np.number])
     signal = df.iloc[0].values.astype(np.float32)
+    signal = signal[~np.isnan(signal)]
 
     # Extract features
     features = extract_all_features(signal).reshape(1, -1)
