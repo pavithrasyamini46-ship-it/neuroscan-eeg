@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}About{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
+      <h2 class="fw-bold mb-2"><i class="bi bi-info-circle text-primary"></i> About NeuroScan EEG</h2>
+      <p class="lead text-muted mb-5">
+        A comprehensive, final-year B.Tech project implementing a multidimensional EEG-based
+        neurological disorder diagnosis system with secure storage and role-based access.
+      </p>
+
+      <div class="card mb-4">
+        <div class="card-header"><i class="bi bi-book"></i> Project Overview</div>
+        <div class="card-body">
+          <p>NeuroScan EEG is a full-stack web application that integrates advanced signal processing,
+          machine learning, deep learning, and cybersecurity techniques to automate the classification
+          of EEG signals into neurological categories (e.g., Normal, Epileptic).</p>
+          <p>This system was designed as a <strong>Multidimensional Framework</strong> because it
+          analyses EEG signals across two analytical dimensions:</p>
+          <ul>
+            <li><strong>Time Domain:</strong> Mean, Variance, STD, Energy, Entropy, Hjorth Activity/Mobility/Complexity</li>
+            <li><strong>Frequency Domain:</strong> FFT-based Delta/Theta/Alpha/Beta band power, Spectral Entropy</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="row g-4 mb-4">
+        {% set tech = [
+          ('bi-funnel','primary','Preprocessing','FIR Bandpass Filter, Independent Component Analysis (ICA), StandardScaler normalization'),
+          ('bi-cpu','success','ML Models','Random Forest, SVM, XGBoost — trained and compared automatically'),
+          ('bi-robot','info','Deep Learning','CNN on spectrograms + Bidirectional LSTM for temporal patterns'),
+          ('bi-shield-lock','warning','Security','AES Fernet encryption for files + reports, bcrypt password hashing'),
+          ('bi-people','danger','Access Control','Role-based system: Admin (full control) vs Doctor (patient management)'),
+          ('bi-bar-chart','secondary','Evaluation','Accuracy, Precision, Recall, F1-Score, Confusion Matrix with Chart.js visualisation'),
+        ] %}
+        {% for icon, color, title, desc in tech %}
+        <div class="col-md-6">
+          <div class="d-flex gap-3 align-items-start">
+            <div class="flex-shrink-0 bg-{{ color }} bg-opacity-10 rounded-3 p-3">
+              <i class="bi {{ icon }} fs-4 text-{{ color }}"></i>
+            </div>
+            <div>
+              <h6 class="fw-bold">{{ title }}</h6>
+              <p class="text-muted small mb-0">{{ desc }}</p>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="card">
+        <div class="card-header"><i class="bi bi-stack"></i> Technology Stack</div>
+        <div class="card-body">
+          <div class="d-flex flex-wrap gap-2">
+            {% for t in ['Python 3.10+','Flask 3.0','SQLite (Flask-SQLAlchemy)','Flask-Login',
+                         'Flask-Bcrypt','scikit-learn','TensorFlow/Keras','XGBoost','NumPy',
+                         'pandas','SciPy','Cryptography (Fernet/AES)','Bootstrap 5','Chart.js','joblib'] %}
+            <span class="badge bg-dark text-info border border-secondary p-2" style="font-size:.8rem;">{{ t }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

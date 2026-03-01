@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<div class="container" style="min-height:80vh; display:flex; align-items:center;">
+  <div class="row justify-content-center w-100">
+    <div class="col-md-5">
+      <div class="card shadow-lg">
+        <div class="card-header text-center py-4">
+          <i class="bi bi-shield-lock fs-1 mb-2 d-block"></i>
+          <h4 class="mb-0">Secure Login</h4>
+          <small class="opacity-75">NeuroScan EEG Diagnosis System</small>
+        </div>
+        <div class="card-body p-4">
+          <form method="POST" action="{{ url_for('login') }}">
+            <div class="mb-3">
+              <label class="form-label fw-semibold"><i class="bi bi-person"></i> Username</label>
+              <input type="text" name="username" class="form-control form-control-lg"
+                     placeholder="Enter your username" required autocomplete="username">
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold"><i class="bi bi-key"></i> Password</label>
+              <div class="input-group">
+                <input type="password" name="password" id="pwd" class="form-control form-control-lg"
+                       placeholder="Enter your password" required autocomplete="current-password">
+                <button class="btn btn-outline-secondary" type="button"
+                        onclick="togglePwd()"><i class="bi bi-eye" id="eye-icon"></i></button>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg w-100 fw-semibold">
+              <i class="bi bi-box-arrow-in-right"></i> Login
+            </button>
+          </form>
+          <hr>
+          <div class="text-center text-muted small">
+            Don't have an account? <a href="{{ url_for('register') }}">Register here</a>
+          </div>
+          <div class="alert alert-info mt-3 py-2 small mb-0">
+            <i class="bi bi-info-circle"></i>
+            <strong>Default Admin:</strong> username <code>admin</code> / password <code>admin123</code>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function togglePwd() {
+  const p = document.getElementById('pwd');
+  const i = document.getElementById('eye-icon');
+  p.type = p.type === 'password' ? 'text' : 'password';
+  i.className = p.type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
+}
+</script>
+{% endblock %}

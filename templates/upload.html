@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Upload EEG{% endblock %}
+{% block content %}
+
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      <div class="mb-4">
+        <h2 class="fw-bold"><i class="bi bi-upload text-primary"></i> Upload EEG Signal</h2>
+        <p class="text-muted">Upload a CSV file containing EEG signal data. The system will preprocess, extract features, and classify the signal using trained ML/DL models.</p>
+      </div>
+
+      <div class="card shadow">
+        <div class="card-header">
+          <i class="bi bi-file-earmark-medical"></i> Patient EEG Submission
+        </div>
+        <div class="card-body p-4">
+          <form method="POST" action="{{ url_for('upload') }}" enctype="multipart/form-data" id="uploadForm">
+
+            <!-- Patient Name -->
+            <div class="mb-4">
+              <label class="form-label fw-semibold"><i class="bi bi-person-fill text-primary"></i> Patient Name</label>
+              <input type="text" name="patient_name" class="form-control form-control-lg"
+                     placeholder="Enter patient full name" required>
+            </div>
+
+            <!-- Model Selection -->
+            <div class="mb-4">
+              <label class="form-label fw-semibold"><i class="bi bi-cpu text-primary"></i> Select Model</label>
+              <select name="model" class="form-select form-select-lg">
+                <option value="">Auto (Best Model)</option>
+                <option value="Random Forest">Random Forest</option>
+                <option value="SVM">Support Vector Machine (SVM)</option>
+                <option value="XGBoost">XGBoost</option>
+              </select>
+              <div class="form-text">Leave as "Auto" to use the highest-performing trained model.</div>
+            </div>
+
+            <!-- File Upload Zone -->
+            <div class="mb-4">
+              <label class="form-label fw-semibold"><i class="bi bi-file-earmark-spreadsheet text-primary"></i> EEG CSV File</label>
+              <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                <i class="bi bi-cloud-upload d-block mb-3"></i>
+                <h5 id="dropText">Drag & drop your EEG CSV here</h5>
+                <p class="text-muted mb-0">or <u>click to browse</u></p>
+                <small class="text-muted">Supported: .csv | Max size: 16 MB</small>
+                <div id="filePreview" class="mt-3" style="display:none;">
+                  <span class="badge bg-success p-2 fs-6"><i class="bi bi-check-circle me-2"></i><span id="fileName"></span></span>
+                </div>
+              </div>
+              <input type="file" name="eeg_file" id="fileInput" accept=".csv"
+                     class="d-none" required onchange="previewFile(this)">
+            </div>
+
+            <!-- Info Panel -->
+            <div class="alert alert-info">
+              <h6 class="alert-heading"><i class="bi bi-info-circle"></i> How it works</h6>
+              <ol class="mb-0 ps-3 small">
+                <li>Your CSV is uploaded and <strong>AES encrypted</strong> immediately.</li>
+                <li>FIR filter + ICA preprocessing applied to remove noise.</li>
+                <li>13 time-domain and frequency-domain features extracted.</li>
+                <li>Selected ML/DL model classifies the EEG signal.</li>
+                <li>Encrypted prediction report stored securely.</li>
+              </ol>
+            </div>
+
+            <!-- Submit -->
+            <div class="d-grid">
+              <button type="submit" class="btn btn-primary btn-lg fw-semibold" id="submitBtn">
+                <i class="bi bi-activity"></i> Analyse EEG Signal
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- SAMPLE CSV FORMAT -->
+      <div class="card mt-4">
+        <div class="card-body">
+          <h6 class="fw-bold text-muted text-uppercase" style="letter-spacing:1px; font-size:.75rem;">
+            <i class="bi bi-file-earmark-code"></i> Expected CSV Format
+          </h6>
+          <p class="text-muted small mb-2">Each row = one EEG segment. Columns = signal amplitude values. Optional final column = <code>label</code>.</p>
+          <pre class="bg-light rounded p-3 small">col1,col2,col3,...,col178,label
+-232.3,  -217.6, -206.1, ..., 128.4, 1
+  45.1,    12.3,  -67.8, ..., -92.1, 2</pre>
+          <small class="text-muted">Compatible with <a href="https://www.kaggle.com/datasets/harunshimanto/epileptic-seizure-recognition" target="_blank">Epileptic Seizure Recognition Dataset</a> (Kaggle)</small>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// Drag & Drop
+const dropZone = document.getElementById('dropZone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.style.background='#dbeafe'; });
+dropZone.addEventListener('dragleave', () => { dropZone.style.background=''; });
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.style.background = '';
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.csv')) {
+    document.getElementById('fileInput').files = e.dataTransfer.files;
+    showPreview(file.name);
+  } else {
+    alert('Please drop a CSV file.');
+  }
+});
+
+function previewFile(input) {
+  if (input.files[0]) showPreview(input.files[0].name);
+}
+
+function showPreview(name) {
+  document.getElementById('fileName').textContent = name;
+  document.getElementById('filePreview').style.display = 'block';
+  document.getElementById('dropText').textContent = 'File selected!';
+}
+
+// Show spinner on submit
+document.getElementById('uploadForm').addEventListener('submit', () => {
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Analysing EEG...';
+});
+</script>
+{% endblock %}

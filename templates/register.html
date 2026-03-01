@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Register{% endblock %}
+{% block content %}
+<div class="container" style="min-height:80vh; display:flex; align-items:center;">
+  <div class="row justify-content-center w-100">
+    <div class="col-md-6">
+      <div class="card shadow-lg">
+        <div class="card-header text-center py-4">
+          <i class="bi bi-person-plus fs-1 mb-2 d-block"></i>
+          <h4 class="mb-0">Create Account</h4>
+          <small class="opacity-75">Register for NeuroScan EEG System</small>
+        </div>
+        <div class="card-body p-4">
+          <form method="POST" action="{{ url_for('register') }}">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-semibold"><i class="bi bi-person"></i> Username</label>
+                <input type="text" name="username" class="form-control" placeholder="Choose username" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-semibold"><i class="bi bi-envelope"></i> Email</label>
+                <input type="email" name="email" class="form-control" placeholder="your@email.com" required>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold"><i class="bi bi-key"></i> Password</label>
+              <input type="password" name="password" class="form-control" placeholder="Minimum 8 characters" required minlength="6">
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold"><i class="bi bi-person-badge"></i> Role</label>
+              <select name="role" class="form-select" onchange="toggleAdminToken(this.value)">
+                <option value="doctor" selected>Doctor</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div class="mb-3" id="admin-token-field" style="display:none;">
+              <label class="form-label fw-semibold text-warning">
+                <i class="bi bi-shield-exclamation"></i> Admin Token Required
+              </label>
+              <input type="text" name="admin_token" class="form-control border-warning"
+                     placeholder="Enter admin access token">
+              <div class="form-text text-warning">
+                The admin token is the first 8 characters of the Flask SECRET_KEY.
+              </div>
+            </div>
+            <button type="submit" class="btn btn-success btn-lg w-100 fw-semibold">
+              <i class="bi bi-person-check"></i> Create Account
+            </button>
+          </form>
+          <hr>
+          <div class="text-center text-muted small">
+            Already have an account? <a href="{{ url_for('login') }}">Login here</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function toggleAdminToken(val) {
+  document.getElementById('admin-token-field').style.display = val === 'admin' ? 'block' : 'none';
+}
+</script>
+{% endblock %}

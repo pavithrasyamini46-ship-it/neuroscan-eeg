@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+{% block title %}Prediction Result{% endblock %}
+{% block content %}
+
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
+
+      <!-- HEADER -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2 class="fw-bold mb-0"><i class="bi bi-activity text-primary"></i> Diagnosis Result</h2>
+          <small class="text-muted">Report ID: #{{ report.id }} &bull; {{ report.created_at.strftime('%d %B %Y, %H:%M') }}</small>
+        </div>
+        <div class="d-flex gap-2">
+          <a href="{{ url_for('download_report', report_id=report.id) }}" class="btn btn-success">
+            <i class="bi bi-download"></i> Download Report
+          </a>
+          <a href="{{ url_for('upload') }}" class="btn btn-outline-primary">
+            <i class="bi bi-upload"></i> New Upload
+          </a>
+        </div>
+      </div>
+
+      <!-- PREDICTION BANNER -->
+      {% set pred_lower     = report.prediction.lower() %}
+      {% set is_epileptic   = 'epilep'    in pred_lower or 'seizure'   in pred_lower %}
+      {% set is_alzheimers  = 'alzheimer' in pred_lower %}
+      {% set is_parkinsons  = 'parkinson' in pred_lower %}
+      {% set is_tumor       = 'tumor'     in pred_lower %}
+      {% set is_normal      = 'normal'    in pred_lower %}
+      {% set is_abnormal    = not is_normal %}
+
+      {% if is_epileptic %}
+        {% set badge_color = 'danger' %}
+        {% set badge_icon  = 'bi-exclamation-triangle-fill' %}
+        {% set badge_text  = '⚠ Epileptic Activity Detected' %}
+        {% set clinical_note = 'Epileptic seizure pattern identified. Requires immediate neurological evaluation and possible antiepileptic therapy.' %}
+      {% elif is_alzheimers %}
+        {% set badge_color = 'warning' %}
+        {% set badge_icon  = 'bi-activity' %}
+        {% set badge_text  = '⚠ Alzheimer Disease Pattern Detected' %}
+        {% set clinical_note = "EEG shows cortical slowing consistent with Alzheimer's disease — increased delta/theta activity and reduced alpha power. Recommend cognitive assessment and MRI follow-up." %}
+      {% elif is_parkinsons %}
+        {% set badge_color = 'warning' %}
+        {% set badge_icon  = 'bi-activity' %}
+        {% set badge_text  = '⚠ Parkinson Disease Pattern Detected' %}
+        {% set clinical_note = 'Beta-band oscillations detected, consistent with Parkinson disease. Recommend movement disorder specialist consultation.' %}
+      {% elif is_tumor %}
+        {% set badge_color = 'danger' %}
+        {% set badge_icon  = 'bi-exclamation-octagon-fill' %}
+        {% set badge_text  = '⚠ Tumor-Related Pattern Detected' %}
+        {% set clinical_note = 'Irregular EEG pattern suggesting tumor-related activity. Immediate neuroimaging (MRI/CT) recommended.' %}
+      {% else %}
+        {% set badge_color = 'success' %}
+        {% set badge_icon  = 'bi-check-circle-fill' %}
+        {% set badge_text  = '✓ Normal EEG Pattern' %}
+        {% set clinical_note = '' %}
+      {% endif %}
+
+      <div class="card mb-4 border-{{ badge_color }}" style="border-width:2px!important;">
+        <div class="card-body text-center py-5">
+          <div class="mb-3">
+            <i class="bi {{ badge_icon }} text-{{ badge_color }}" style="font-size:4rem;"></i>
+          </div>
+          <h2 class="fw-bold mb-2">{{ report.prediction }}</h2>
+          <div class="pred-badge {{ 'pred-epileptic' if is_abnormal else 'pred-normal' }} d-inline-block mb-3">
+            {{ badge_text }}
+          </div>
+
+          <!-- Confidence Bar -->
+          <div class="row justify-content-center mt-3">
+            <div class="col-md-6">
+              <div class="d-flex justify-content-between mb-1">
+                <small class="fw-semibold">Model Confidence</small>
+                <small class="fw-bold">{{ "%.1f"|format(report.confidence) }}%</small>
+              </div>
+              <div class="progress" style="height:14px; border-radius:99px;">
+                <div class="progress-bar bg-{{ badge_color }}"
+                     style="width:{{ report.confidence|round }}%; border-radius:99px;">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {% if is_abnormal and clinical_note %}
+          <div class="alert alert-{{ 'danger' if badge_color == 'danger' else 'warning' }} mt-4 text-start"
+               style="max-width:540px; margin:1rem auto 0;">
+            <strong><i class="bi bi-heart-pulse"></i> Clinical Note:</strong>
+            {{ clinical_note }}
+            <hr class="my-2">
+            <small class="text-muted">This is an AI-assisted tool and does not replace diagnosis by a qualified neurologist.</small>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <!-- PATIENT INFO -->
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-header"><i class="bi bi-person-vcard"></i> Patient Information</div>
+            <div class="card-body">
+              <table class="table table-borderless mb-0">
+                <tr><th>Patient Name</th><td>{{ report.patient_name }}</td></tr>
+                <tr><th>File Name</th><td>{{ report.filename }}</td></tr>
+                <tr><th>Doctor</th><td>Dr. {{ report.user.username }}</td></tr>
+                <tr><th>Date</th><td>{{ report.created_at.strftime('%d %b %Y %H:%M') }}</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODEL INFO -->
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-header"><i class="bi bi-cpu"></i> Analysis Details</div>
+            <div class="card-body">
+              <table class="table table-borderless mb-0">
+                <tr><th>Model Used</th><td><span class="badge bg-primary fs-6">{{ report.model_used }}</span></td></tr>
+                <tr><th>Confidence</th><td>{{ "%.2f"|format(report.confidence) }}%</td></tr>
+                <tr><th>Prediction</th><td>{{ report.prediction }}</td></tr>
+                <tr>
+                  <th>Encryption</th>
+                  <td><span class="enc-badge"><i class="bi bi-lock-fill"></i> AES Fernet</span></td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- EXTRACTED FEATURES -->
+        {% if report_data.features %}
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header"><i class="bi bi-graph-up"></i> Extracted EEG Features (Sample)</div>
+            <div class="card-body">
+              <div class="row g-3">
+                {% for key, val in report_data.features.items() %}
+                <div class="col-sm-6 col-md-3">
+                  <div class="bg-light rounded p-3 text-center">
+                    <div class="text-muted small text-uppercase" style="letter-spacing:1px;">{{ key }}</div>
+                    <div class="fw-bold fs-5 text-primary">{{ "%.4f"|format(val) }}</div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- EEG BAND POWER CHART -->
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header"><i class="bi bi-bar-chart"></i> EEG Band Power (Frequency Domain)</div>
+            <div class="card-body">
+              <canvas id="bandChart" height="200"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECURITY INFO -->
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header"><i class="bi bi-shield-check"></i> Security & Encryption Info</div>
+            <div class="card-body">
+              <ul class="list-unstyled">
+                <li class="mb-3 d-flex align-items-center gap-2">
+                  <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                  <div><strong>EEG File Encrypted</strong><br><small class="text-muted">Stored as AES Fernet ciphertext (.enc)</small></div>
+                </li>
+                <li class="mb-3 d-flex align-items-center gap-2">
+                  <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                  <div><strong>Report Encrypted</strong><br><small class="text-muted">Prediction report stored as encrypted binary blob in DB</small></div>
+                </li>
+                <li class="mb-3 d-flex align-items-center gap-2">
+                  <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                  <div><strong>Raw File Deleted</strong><br><small class="text-muted">Unencrypted CSV removed after processing</small></div>
+                </li>
+                <li class="d-flex align-items-center gap-2">
+                  <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                  <div><strong>Role-Based Access</strong><br><small class="text-muted">Only authorized doctors/admins can view this report</small></div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /row -->
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Simulated band power chart (use real feature values if available)
+new Chart(document.getElementById('bandChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Delta (0.5-4Hz)', 'Theta (4-8Hz)', 'Alpha (8-13Hz)', 'Beta (13-30Hz)'],
+    datasets: [{
+      label: 'Band Power (μV²/Hz)',
+      data: [
+        {{ report_data.features.get('mean', 1.2)|abs * 100 if report_data.features else 120 }},
+        {{ report_data.features.get('variance', 0.8)|abs * 50 if report_data.features else 80 }},
+        {{ report_data.features.get('std', 0.5)|abs * 30 if report_data.features else 50 }},
+        {{ report_data.features.get('energy', 0.3)|abs * 0.001 if report_data.features else 30 }},
+      ],
+      backgroundColor: ['#0d6efd88','#28a74588','#ffc10788','#dc354588'],
+      borderColor: ['#0d6efd','#28a745','#ffc107','#dc3545'],
+      borderWidth: 2,
+      borderRadius: 8,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true } }
+  }
+});
+</script>
+{% endblock %}

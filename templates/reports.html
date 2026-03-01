@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-0"><i class="bi bi-folder2-open text-primary"></i>
+        {% if current_user.role == 'admin' %}All Patient Reports{% else %}My Reports{% endif %}
+      </h2>
+      <small class="text-muted">Encrypted EEG diagnosis reports — {{ reports|length }} record(s)</small>
+    </div>
+    <a href="{{ url_for('upload') }}" class="btn btn-primary">
+      <i class="bi bi-upload"></i> New EEG
+    </a>
+  </div>
+
+  {% if not reports %}
+  <div class="card text-center py-5">
+    <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+    <h4 class="text-muted">No reports found</h4>
+    <p class="text-muted">Upload an EEG file to generate your first report.</p>
+  </div>
+  {% else %}
+  <div class="card">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+          <thead class="table-dark">
+            <tr>
+              <th>ID</th>
+              {% if current_user.role == 'admin' %}<th>Doctor</th>{% endif %}
+              <th>Patient</th>
+              <th>File</th>
+              <th>Model</th>
+              <th>Prediction</th>
+              <th>Confidence</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in reports %}
+            <tr>
+              <td><span class="badge bg-light text-dark">#{{ r.id }}</span></td>
+              {% if current_user.role == 'admin' %}<td>Dr. {{ r.user.username }}</td>{% endif %}
+              <td><i class="bi bi-person-circle me-1 text-primary"></i>{{ r.patient_name }}</td>
+              <td>
+                <span class="text-muted small">
+                  <i class="bi bi-file-earmark-lock2 text-warning"></i> {{ r.filename }}
+                </span>
+              </td>
+              <td><span class="badge bg-secondary">{{ r.model_used }}</span></td>
+              <td>
+                <span class="badge bg-{{ 'danger' if 'epilep' in r.prediction.lower() else 'success' }} fs-6">
+                  {{ r.prediction }}
+                </span>
+              </td>
+              <td>
+                <div class="d-flex align-items-center gap-2" style="min-width:100px;">
+                  <div class="progress flex-grow-1" style="height:6px;">
+                    <div class="progress-bar bg-info" style="width:{{ r.confidence|round }}%;"></div>
+                  </div>
+                  <small>{{ "%.1f"|format(r.confidence) }}%</small>
+                </div>
+              </td>
+              <td><small>{{ r.created_at.strftime('%Y-%m-%d') }}</small></td>
+              <td>
+                <div class="d-flex gap-1">
+                  <a href="{{ url_for('result', report_id=r.id) }}"
+                     class="btn btn-sm btn-outline-primary" title="View">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  <a href="{{ url_for('download_report', report_id=r.id) }}"
+                     class="btn btn-sm btn-outline-success" title="Download">
+                    <i class="bi bi-download"></i>
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

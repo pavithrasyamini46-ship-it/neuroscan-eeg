@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+
+<!-- HERO SECTION -->
+<div class="container-fluid px-0">
+  <div style="background:linear-gradient(135deg,#0f1923 0%,#0a2540 60%,#0d1f3c 100%); min-height:85vh; display:flex; align-items:center;">
+    <div class="container py-5">
+      <div class="row align-items-center">
+        <div class="col-lg-6">
+          <span class="badge text-bg-info mb-3" style="font-size:.85rem; letter-spacing:1px;">
+            <i class="bi bi-shield-check"></i> AES Encrypted &bull; Role-Based Access
+          </span>
+          <h1 class="display-4 fw-bold text-white mb-3" style="font-family:'Rajdhani',sans-serif; line-height:1.2;">
+            AI-Powered <span style="color:#00c6c6;">EEG Analysis</span><br>
+            for Neurological Diagnosis
+          </h1>
+          <p class="text-secondary fs-5 mb-4">
+            A multidimensional framework combining Time Domain, Frequency Domain analysis,
+            Deep Learning (CNN, BiLSTM), and Secure AES Encryption for clinical-grade EEG-based
+            disorder detection.
+          </p>
+          <div class="d-flex gap-3 flex-wrap">
+            {% if current_user.is_authenticated %}
+              <a href="{{ url_for('dashboard') }}" class="btn btn-info btn-lg px-4 fw-semibold">
+                <i class="bi bi-grid-1x2"></i> Go to Dashboard
+              </a>
+            {% else %}
+              <a href="{{ url_for('login') }}" class="btn btn-info btn-lg px-4 fw-semibold">
+                <i class="bi bi-box-arrow-in-right"></i> Login
+              </a>
+              <a href="{{ url_for('register') }}" class="btn btn-outline-light btn-lg px-4">
+                <i class="bi bi-person-plus"></i> Register
+              </a>
+            {% endif %}
+          </div>
+
+          <!-- TECH BADGES -->
+          <div class="d-flex gap-2 mt-4 flex-wrap">
+            {% for badge in ['Random Forest','SVM','XGBoost','CNN','BiLSTM','AES-256','Flask','SQLite'] %}
+            <span class="badge bg-dark text-info border border-secondary" style="font-size:.75rem;">{{ badge }}</span>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- EEG VISUAL -->
+        <div class="col-lg-6 text-center mt-5 mt-lg-0">
+          <div style="position:relative; display:inline-block;">
+            <div class="pulse-icon" style="background:#00c6c620; padding:40px; border-radius:50%; border:2px solid #00c6c655;">
+              <i class="bi bi-activity" style="font-size:6rem; color:#00c6c6;"></i>
+            </div>
+          </div>
+          <!-- Simulated EEG wave -->
+          <div class="mt-4">
+            <svg class="eeg-wave" viewBox="0 0 900 80" xmlns="http://www.w3.org/2000/svg">
+              <path d="M0,40 L60,40 L80,10 L100,70 L120,20 L140,60 L160,35
+                       L220,40 L240,5  L260,75 L280,15 L300,65 L320,38
+                       L380,40 L400,12 L420,68 L440,22 L460,58 L480,36
+                       L540,40 L560,8  L580,72 L600,18 L620,62 L640,38
+                       L700,40 L720,14 L740,66 L760,24 L780,56 L800,40
+                       L900,40"
+                    fill="none" stroke="#00c6c6" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEATURES SECTION -->
+  <div class="container py-5">
+    <h2 class="text-center fw-bold mb-1">System Capabilities</h2>
+    <p class="text-center text-muted mb-5">A complete, production-ready neurological diagnosis pipeline</p>
+    <div class="row g-4">
+      {% set features = [
+        ('bi-cpu','primary','Multidimensional Feature Extraction','Time domain (Hjorth, Entropy, Energy) + Frequency domain (FFT band power: Delta, Theta, Alpha, Beta) combined for accurate classification.'),
+        ('bi-robot','success','5 ML/DL Models','Random Forest, SVM, XGBoost, CNN (spectrogram), and BiLSTM — automatically selects the best performing model.'),
+        ('bi-shield-lock','warning','AES Encryption','All uploaded EEG files and patient reports are encrypted with Fernet (AES-128 CBC) and decrypted only during prediction.'),
+        ('bi-people','info','Role-Based Access','Admin controls (user management, logs, metrics) and Doctor controls (upload, predict, download reports) fully separated.'),
+        ('bi-graph-up','danger','Real-Time Analytics','Interactive Chart.js dashboards showing accuracy, F1, precision, recall, and confusion matrices across all trained models.'),
+        ('bi-filter','secondary','Signal Preprocessing','FIR bandpass filtering, Independent Component Analysis (ICA), and StandardScaler normalization applied before analysis.'),
+      ] %}
+      {% for icon, color, title, desc in features %}
+      <div class="col-md-6 col-lg-4">
+        <div class="card h-100 p-4">
+          <div class="d-flex align-items-start gap-3">
+            <div class="flex-shrink-0">
+              <div class="rounded-3 p-3 bg-{{ color }} bg-opacity-10">
+                <i class="bi {{ icon }} fs-3 text-{{ color }}"></i>
+              </div>
+            </div>
+            <div>
+              <h5 class="fw-bold mb-1">{{ title }}</h5>
+              <p class="text-muted mb-0" style="font-size:.9rem;">{{ desc }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- PIPELINE STEPS -->
+  <div style="background:#f8fbff;" class="py-5">
+    <div class="container">
+      <h2 class="text-center fw-bold mb-5">Diagnosis Pipeline</h2>
+      <div class="row g-0 justify-content-center">
+        {% set steps = [
+          ('1','bi-upload','Upload EEG CSV','Doctor uploads patient EEG data via secure portal.'),
+          ('2','bi-funnel','Preprocess','FIR filter + ICA + StandardScaler normalize the signal.'),
+          ('3','bi-lightning','Extract Features','13 time+frequency domain features extracted per channel.'),
+          ('4','bi-cpu','ML/DL Predict','Best model (RF/SVM/XGB/BiLSTM) classifies the EEG.'),
+          ('5','bi-lock','Encrypt','EEG file and report encrypted with AES before storage.'),
+          ('6','bi-file-earmark-check','Download Report','Doctor downloads encrypted report. Admin reviews all.'),
+        ] %}
+        {% for num, icon, title, desc in steps %}
+        <div class="col-md-4 col-lg-2 text-center mb-4 px-3">
+          <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+               style="width:60px;height:60px;background:linear-gradient(135deg,#0d6efd,#00c6c6);color:white;font-size:1.5rem;">
+            <i class="bi {{ icon }}"></i>
+          </div>
+          <div class="text-primary fw-bold small">Step {{ num }}</div>
+          <h6 class="fw-bold">{{ title }}</h6>
+          <p class="text-muted" style="font-size:.8rem;">{{ desc }}</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
