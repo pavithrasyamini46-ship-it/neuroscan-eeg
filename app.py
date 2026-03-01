@@ -714,13 +714,13 @@ def seed_admin():
 # MAIN
 # ─────────────────────────────────────────────────────────────
 
+# Initialize database on startup (works on Render too)
+with app.app_context():
+    db.create_all()
+    seed_admin()
+    print("[+] Database initialized.")
+
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-        seed_admin()
-        print("[+] Database initialized.")
-import os
-port = int(os.environ.get('PORT', 5000))
-app.run(debug=False, host='0.0.0.0', port=port)
-
-
+    import os
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=False, host='0.0.0.0', port=port)
