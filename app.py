@@ -499,6 +499,10 @@ def reports():
 @app.route('/report/download/<int:report_id>')
 @role_required('doctor', 'admin')
 def download_report(report_id):
+    from docx import Document as DocxDocument
+    from docx.shared import Pt, RGBColor, Inches
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+
     report = Report.query.get_or_404(report_id)
 
     if current_user.role == 'doctor' and report.user_id != current_user.id:
@@ -509,14 +513,169 @@ def download_report(report_id):
     except Exception:
         report_data = {}
 
-    # Write a temp JSON file for download
-    tmp_path = os.path.join(app.config['REPORTS_FOLDER'], f'report_{report_id}.json')
-    with open(tmp_path, 'w') as f:
-        json.dump(report_data, f, indent=2)
+    # ── Build a professional Word document ──
+    doc = DocxDocument()
 
-    log_action(f"Downloaded report ID {report_id}")
+    # Page margins
+    for section in doc.sections:
+        section.top_margin    = Inches(1)
+        section.bottom_margin = Inches(1)
+        section.left_margin   = Inches(1.2)
+        section.right_margin  = Inches(1.2)
+
+    # ── HEADER ──
+    header_para = doc.add_paragraph()
+    header_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = header_para.add_run("NEUROSCAN EEG")
+    run.bold      = True
+    run.font.size = Pt(20)
+    run.font.color.rgb = RGBColor(0x0D, 0x6E, 0xFD)
+
+    sub = doc.add_paragraph()
+    sub.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    r = sub.add_run("Multidimensional Neurological Disorder Diagnosis System")
+    r.font.size  = Pt(11)
+    r.font.color.rgb = RGBColor(0x44, 0x44, 0x44)
+
+    doc.add_paragraph()  # spacer
+
+    # ── TITLE ──
+    title = doc.add_paragraph()
+    title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    t = title.add_run("EEG DIAGNOSIS REPORT")
+    t.bold = True
+    t.font.size = Pt(16)
+    t.font.color.rgb = RGBColor(0x0D, 0x6E, 0xFD)
+
+    doc.add_paragraph()
+
+    # ── HORIZONTAL LINE ──
+    p = doc.add_paragraph()
+    p.add_run("─" * 65)
+
+    # ── HELPER: add label-value row ──
+    def add_row(label, value, bold_value=False, color=None):
+        p = doc.add_paragraph()
+        r1 = p.add_run(f"{label}: ")
+        r1.bold = True
+        r1.font.size = Pt(11)
+        r2 = p.add_run(str(value))
+        r2.bold = bold_value
+        r2.font.size = Pt(11)
+        if color:
+            r2.font.color.rgb = color
+        p.paragraph_format.space_after = Pt(4)
+
+    # ── SECTION 1: Patient Info ──
+    h1 = doc.add_heading("1. Patient Information", level=1)
+    h1.runs[0].font.color.rgb = RGBColor(0x0D, 0x6E, 0xFD)
+
+    add_row("Patient Name",  report_data.get("patient", report.patient_name))
+    add_row("Doctor",        f"Dr. {report_data.get('doctor', report.user.username)}")
+    add_row("Report ID",     f"#{report.id}")
+    add_row("Date & Time",   report.created_at.strftime("%d %B %Y, %H:%M:%S"))
+    add_row("EEG File",      report.filename)
+
+    doc.add_paragraph()
+
+    # ── SECTION 2: Diagnosis Result ──
+    h2 = doc.add_heading("2. Diagnosis Result", level=1)
+    h2.runs[0].font.color.rgb = RGBColor(0x0D, 0x6E, 0xFD)
+
+    prediction  = report_data.get("prediction", report.prediction)
+    confidence  = report_data.get("confidence", report.confidence)
+    model_used  = report_data.get("model",      report.model_used)
+
+    pred_lower  = prediction.lower()
+    is_normal   = "normal" in pred_lower
+    pred_color  = RGBColor(0x28, 0xA7, 0x45) if is_normal else RGBColor(0xDC, 0x35, 0x45)
+
+    add_row("Prediction",    prediction,  bold_value=True, color=pred_color)
+    add_row("Confidence",    f"{confidence:.2f}%")
+    add_row("Model Used",    model_used)
+    add_row("Status",
+            "NORMAL — No significant abnormality detected" if is_normal
+            else "ABNORMAL — Neurological pattern detected",
+            bold_value=True, color=pred_color)
+
+    doc.add_paragraph()
+
+    # ── SECTION 3: Clinical Note ──
+    h3 = doc.add_heading("3. Clinical Note", level=1)
+    h3.runs[0].font.color.rgb = RGBColor(0x0D, 0x6E, 0xFD)
+
+    notes = {
+        "epilep":    "Epileptic seizure pattern identified. Requires immediate neurological evaluation and possible antiepileptic therapy.",
+        "alzheimer": "EEG shows cortical slowing consistent with Alzheimer's disease (increased delta/theta, reduced alpha). Recommend cognitive assessment and MRI follow-up.",
+        "parkinson": "Beta-band oscillations detected, consistent with Parkinson's disease. Recommend movement disorder specialist consultation.",
+        "tumor":     "Irregular EEG pattern suggesting tumor-related activity. Immediate neuroimaging (MRI/CT) recommended.",
+        "normal":    "No abnormal neurological patterns detected. EEG signal is within normal range.",
+    }
+    note = next((v for k, v in notes.items() if k in pred_lower), "Please consult a qualified neurologist for further evaluation.")
+    p = doc.add_paragraph(note)
+    p.runs[0].font.size = Pt(11)
+    p.runs[0].italic    = True
+
+    doc.add_paragraph()
+
+    # ── SECTION 4: EEG Features ──
+    feats = report_data.get("features", {})
+    if feats:
+        h4 = doc.add_heading("4. Extracted EEG Features", level=1)
+        h4.runs[0].font.color.rgb = RGBColor(0x0D, 0x6E, 0xFD)
+
+        from docx.oxml.ns import qn
+        from docx.oxml   import OxmlElement
+
+        # Feature table
+        table = doc.add_table(rows=1, cols=2)
+        table.style = "Table Grid"
+        hdr = table.rows[0].cells
+        hdr[0].text = "Feature"
+        hdr[1].text = "Value"
+        for cell in hdr:
+            for run in cell.paragraphs[0].runs:
+                run.bold = True
+        for key, val in feats.items():
+            row = table.add_row().cells
+            row[0].text = key.replace("_", " ").title()
+            row[1].text = f"{val:.6f}" if isinstance(val, float) else str(val)
+
+        doc.add_paragraph()
+
+    # ── SECTION 5: Security Info ──
+    h5 = doc.add_heading("5. Security & Encryption", level=1)
+    h5.runs[0].font.color.rgb = RGBColor(0x0D, 0x6E, 0xFD)
+
+    add_row("Encryption",       "AES Fernet (AES-128-CBC)")
+    add_row("File Storage",     "Encrypted .enc file — raw CSV deleted after processing")
+    add_row("Report Storage",   "Encrypted binary blob stored in SQLite database")
+    add_row("Access Control",   "Role-Based — Doctor/Admin only")
+    add_row("Password Hashing", "bcrypt adaptive hashing")
+
+    doc.add_paragraph()
+
+    # ── FOOTER ──
+    p = doc.add_paragraph()
+    p.add_run("─" * 65)
+    footer_p = doc.add_paragraph()
+    footer_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    fr = footer_p.add_run(
+        "This report is generated by NeuroScan EEG — AI-Assisted Neurological Diagnosis System.\n"
+        "This is NOT a substitute for clinical diagnosis by a qualified neurologist."
+    )
+    fr.italic    = True
+    fr.font.size = Pt(9)
+    fr.font.color.rgb = RGBColor(0x88, 0x88, 0x88)
+
+    # ── Save and send ──
+    safe_name = report.patient_name.replace(" ", "_")
+    tmp_path  = os.path.join(app.config['REPORTS_FOLDER'], f'report_{report_id}.docx')
+    doc.save(tmp_path)
+
+    log_action(f"Downloaded DOCX report ID {report_id}")
     return send_file(tmp_path, as_attachment=True,
-                     download_name=f'EEG_Report_{report.patient_name}_{report_id}.json')
+                     download_name=f'EEG_Report_{safe_name}_{report_id}.docx')
 
 # ─────────────────────────────────────────────────────────────
 # ERROR HANDLERS
@@ -555,10 +714,13 @@ def seed_admin():
 # MAIN
 # ─────────────────────────────────────────────────────────────
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     with app.app_context():
         db.create_all()
         seed_admin()
         print("[+] Database initialized.")
-    app.run(host="0.0.0.0", port=5000, debug=True)
+import os
+port = int(os.environ.get('PORT', 5000))
+app.run(debug=False, host='0.0.0.0', port=port)
+
 
