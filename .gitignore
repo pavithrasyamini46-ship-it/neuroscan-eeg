@@ -9,9 +9,6 @@ encrypted_data/
 static/uploads/
 static/reports/
 logs/
-models/*.pkl
-models/*.keras
-models/*.h5
 data/
 *.csv
 instance/
