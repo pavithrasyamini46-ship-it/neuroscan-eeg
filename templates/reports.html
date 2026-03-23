@@ -51,9 +51,16 @@
               </td>
               <td><span class="badge bg-secondary">{{ r.model_used }}</span></td>
               <td>
-                <span class="badge bg-{{ 'danger' if 'epilep' in r.prediction.lower() else 'success' }} fs-6">
-                  {{ r.prediction }}
-                </span>
+                {% set p = r.prediction.lower() %}
+                {% if 'epilep' in p or 'seizure' in p or 'tumor' in p %}
+                  <span class="badge bg-danger fs-6">{{ r.prediction }}</span>
+                {% elif 'alzheimer' in p or 'parkinson' in p %}
+                  <span class="badge bg-warning text-dark fs-6">{{ r.prediction }}</span>
+                {% elif 'normal' in p %}
+                  <span class="badge bg-success fs-6">{{ r.prediction }}</span>
+                {% else %}
+                  <span class="badge bg-warning text-dark fs-6">{{ r.prediction }}</span>
+                {% endif %}
               </td>
               <td>
                 <div class="d-flex align-items-center gap-2" style="min-width:100px;">

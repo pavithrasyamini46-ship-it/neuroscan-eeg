@@ -23,39 +23,44 @@
       </div>
 
       <!-- PREDICTION BANNER -->
-      {% set pred_lower     = report.prediction.lower() %}
-      {% set is_epileptic   = 'epilep'    in pred_lower or 'seizure'   in pred_lower %}
-      {% set is_alzheimers  = 'alzheimer' in pred_lower %}
-      {% set is_parkinsons  = 'parkinson' in pred_lower %}
-      {% set is_tumor       = 'tumor'     in pred_lower %}
-      {% set is_normal      = 'normal'    in pred_lower %}
-      {% set is_abnormal    = not is_normal %}
+      {% set pred_lower    = report.prediction.lower() %}
+      {% set is_epileptic  = 'epilep'    in pred_lower or 'seizure'  in pred_lower %}
+      {% set is_alzheimers = 'alzheimer' in pred_lower %}
+      {% set is_parkinsons = 'parkinson' in pred_lower %}
+      {% set is_tumor      = 'tumor'     in pred_lower %}
+      {% set is_normal     = pred_lower == 'normal' or pred_lower == 'normal eeg' %}
+      {% set is_abnormal   = not is_normal %}
 
       {% if is_epileptic %}
-        {% set badge_color = 'danger' %}
-        {% set badge_icon  = 'bi-exclamation-triangle-fill' %}
-        {% set badge_text  = '⚠ Epileptic Activity Detected' %}
-        {% set clinical_note = 'Epileptic seizure pattern identified. Requires immediate neurological evaluation and possible antiepileptic therapy.' %}
-      {% elif is_alzheimers %}
-        {% set badge_color = 'warning' %}
-        {% set badge_icon  = 'bi-activity' %}
-        {% set badge_text  = '⚠ Alzheimer Disease Pattern Detected' %}
-        {% set clinical_note = "EEG shows cortical slowing consistent with Alzheimer's disease — increased delta/theta activity and reduced alpha power. Recommend cognitive assessment and MRI follow-up." %}
-      {% elif is_parkinsons %}
-        {% set badge_color = 'warning' %}
-        {% set badge_icon  = 'bi-activity' %}
-        {% set badge_text  = '⚠ Parkinson Disease Pattern Detected' %}
-        {% set clinical_note = 'Beta-band oscillations detected, consistent with Parkinson disease. Recommend movement disorder specialist consultation.' %}
+        {% set badge_color    = 'danger' %}
+        {% set badge_icon     = 'bi-exclamation-triangle-fill' %}
+        {% set badge_text     = '⚠ Epileptic Activity Detected' %}
+        {% set clinical_note  = 'Epileptic seizure pattern identified. Requires immediate neurological evaluation and possible antiepileptic therapy.' %}
       {% elif is_tumor %}
-        {% set badge_color = 'danger' %}
-        {% set badge_icon  = 'bi-exclamation-octagon-fill' %}
-        {% set badge_text  = '⚠ Tumor-Related Pattern Detected' %}
-        {% set clinical_note = 'Irregular EEG pattern suggesting tumor-related activity. Immediate neuroimaging (MRI/CT) recommended.' %}
+        {% set badge_color    = 'danger' %}
+        {% set badge_icon     = 'bi-exclamation-octagon-fill' %}
+        {% set badge_text     = '⚠ Tumor-Related Pattern Detected' %}
+        {% set clinical_note  = 'Irregular EEG pattern suggesting tumor-related activity. Immediate neuroimaging (MRI/CT) recommended.' %}
+      {% elif is_alzheimers %}
+        {% set badge_color    = 'warning' %}
+        {% set badge_icon     = 'bi-activity' %}
+        {% set badge_text     = "⚠ Alzheimer's Disease Pattern Detected" %}
+        {% set clinical_note  = "EEG shows cortical slowing consistent with Alzheimer's disease — increased delta/theta activity and reduced alpha power. Recommend cognitive assessment and MRI follow-up." %}
+      {% elif is_parkinsons %}
+        {% set badge_color    = 'warning' %}
+        {% set badge_icon     = 'bi-activity' %}
+        {% set badge_text     = "⚠ Parkinson's Disease Pattern Detected" %}
+        {% set clinical_note  = 'Beta-band oscillations detected, consistent with Parkinson disease. Recommend movement disorder specialist consultation.' %}
+      {% elif is_normal %}
+        {% set badge_color    = 'success' %}
+        {% set badge_icon     = 'bi-check-circle-fill' %}
+        {% set badge_text     = '✓ Normal EEG Pattern' %}
+        {% set clinical_note  = '' %}
       {% else %}
-        {% set badge_color = 'success' %}
-        {% set badge_icon  = 'bi-check-circle-fill' %}
-        {% set badge_text  = '✓ Normal EEG Pattern' %}
-        {% set clinical_note = '' %}
+        {% set badge_color    = 'warning' %}
+        {% set badge_icon     = 'bi-exclamation-circle-fill' %}
+        {% set badge_text     = '⚠ Abnormal EEG Pattern Detected' %}
+        {% set clinical_note  = 'An abnormal EEG pattern has been detected. Please consult a qualified neurologist for further evaluation.' %}
       {% endif %}
 
       <div class="card mb-4 border-{{ badge_color }}" style="border-width:2px!important;">

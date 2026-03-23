@@ -7,7 +7,7 @@ n_samples = 1000      # total rows
 n_features = 178     # EEG time points per segment
 
 def generate_eeg_segment(label):
-    if label == 1:  # Normal EEG
+    if label == 3:  # Normal EEG
         signal = np.random.normal(0, 50, n_features)
     else:  # Epileptic EEG (higher spikes)
         signal = np.random.normal(0, 100, n_features)
