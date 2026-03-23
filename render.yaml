@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: neuroscaneeg
+    env: python
+    buildCommand: "pip install -r requirements.txt && python train_model.py --dataset data/eeg_dataset.csv"
+    startCommand: "python app.py"
